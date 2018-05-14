@@ -21,9 +21,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         response.write(body)
         self.wfile.write(response.getvalue())
 
-
 httpd = HTTPServer(('localhost', 8000), SimpleHTTPRequestHandler)
-httpd.socket = ssl.wrap_socket (httpd.socket, keyfile="./key.pem", certfile='./cert.pem', server_side=True,
-                               ssl_version=ssl.PROTOCOL_TLSv1)
+httpd.socket = ssl.wrap_socket (httpd.socket, keyfile="./key.pem", certfile='./cert.pem', server_side=True, ssl_version=ssl.PROTOCOL_TLSv1)
 
 httpd.serve_forever()

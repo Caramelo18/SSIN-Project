@@ -1,23 +1,26 @@
 from OpenSSL import crypto
 from pathlib import Path
-import rsa
+import ssl
+import socket
 
 public_key = None
 private_key = None
 
 def create_keys():
-    #global public_key, private_key
-    (public_key, private_key) = rsa.newkeys(2048, poolsize = 8)
+    key = crypto.PKey()
+    key.generate_key(crypto.TYPE_RSA, 2048)
+    global public_key
+    public_key = crypto.dump_publickey(crypto.FILETYPE_PEM, key)
+    global private_key
+    private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
 
-    pbk = public_key.save_pkcs1('PEM').decode('ascii')
-    pvk = private_key.save_pkcs1('PEM').decode('ascii')
+    public_file = open("public.key", "w+")
+    public_file.write(public_key.decode("utf-8"))
 
-    public_file = open("public.key", "w")
-    public_file.write(pbk)
+    private_file = open("private.key", "w+")
+    private_file.write(private_key.decode("utf-8"))
 
-    private_file = open("private.key", "w")
-    private_file.write(pvk)
-
+    return key
 
 def load_keys():
     public_file = Path("public.key")
@@ -28,28 +31,29 @@ def load_keys():
     if public_file.exists() is False or private_file.exists() is False:
         create_keys()
     else:
-        with open('public.key', mode='rb') as public_file:
-            keydata = public_file.read()
-            public_key = rsa.PublicKey.load_pkcs1(keydata, 'PEM')
+        public_file = open("public.key", "r").read()
+        private_file = open("private.key", "r").read()
+        public_key = crypto.load_publickey(crypto.FILETYPE_PEM, public_file)
+        private_key = crypto.load_privatekey(crypto.FILETYPE_PEM, private_file)
+        # print(crypto.dump_publickey(crypto.FILETYPE_PEM, public_key))
+        # print(crypto.dump_privatekey(crypto.FILETYPE_PEM, private_key))
 
-        with open('private.key', mode='rb') as private_file:
-            keydata = private_file.read()
-            private_key = rsa.PrivateKey.load_pkcs1(keydata, 'PEM')
+def connect():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('localhost', 8000))
+    s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
+    b = bytes("GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: close\r\n\r\n", 'utf-8')
+    s.sendall(b)
 
-
-
-def test():
-    string = "Ola".encode('utf-8')
-    global private_key, public_key
-    crypto = rsa.encrypt(string, public_key)
-    print(string)
-    print(crypto)
-    message = rsa.decrypt(crypto, private_key)
-    print(message)
+    while True:
+        new = s.recv(4096)
+        if not new:
+            s.close()
+            break
+        print(new)
 
 def main():
     load_keys()
-    #test()
 
 if __name__ == '__main__':
     main()
