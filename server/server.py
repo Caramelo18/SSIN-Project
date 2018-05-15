@@ -10,21 +10,43 @@ from io import BytesIO
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b'Hello, world!')
+        if self.path == '/':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'Hello, world!')
+        elif self.path == '/public_key':
+            get_public_key(self)
+
 
     def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        body = self.rfile.read(content_length)
-        self.send_response(200)
-        self.end_headers()
-        response = BytesIO()
-        response.write(b'This is POST request. ')
-        response.write(b'Received: ')
-        response.write(body)
-        self.wfile.write(response.getvalue())
+        if self.path == '/handshake':
+            handshake(self)
+            self.send_response(200)
+            self.end_headers()
+            self.write(b'POST Received)
+        else:
+            content_length = int(self.headers['Content-Length'])
+            body = self.rfile.read(content_length)
+            self.send_response(400)
+            self.end_headers()
 
+
+def get_public_key(self):
+    self.send_response(200)
+    self.end_headers()
+    global public_key
+    pbk = public_key.save_pkcs1('PEM')
+    self.wfile.write(pbk)
+
+def handshake(self):
+    content_length = int(self.headers['Content-Length'])
+    body = self.rfile.read(content_length)
+    self.send_response(200)
+    self.end_headers()
+    response = BytesIO()
+    response.write(b'handshake')
+    response.write(body)
+    self.wfile.write(response.getvalue())
 
 
 def load_keys():
