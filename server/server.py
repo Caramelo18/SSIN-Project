@@ -1,5 +1,9 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import ssl
+import sys
+sys.path.append('../')
+import keys
+import rsa
 
 from io import BytesIO
 
@@ -21,7 +25,21 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         response.write(body)
         self.wfile.write(response.getvalue())
 
-httpd = HTTPServer(('localhost', 8000), SimpleHTTPRequestHandler)
-httpd.socket = ssl.wrap_socket (httpd.socket, keyfile="./key.pem", certfile='./cert.pem', server_side=True, ssl_version=ssl.PROTOCOL_TLSv1)
 
-httpd.serve_forever()
+
+def load_keys():
+    keys.load_keys()
+    global public_key, private_key
+    public_key = keys.public_key
+    private_key = keys.private_key
+
+def main():
+    load_keys()
+    global public_key
+    httpd = HTTPServer(('localhost', 8000), SimpleHTTPRequestHandler)
+    httpd.socket = ssl.wrap_socket (httpd.socket, keyfile="./key.pem", certfile='./cert.pem', server_side=True, ssl_version=ssl.PROTOCOL_TLSv1)
+
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    main()
