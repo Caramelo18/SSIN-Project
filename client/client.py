@@ -46,27 +46,41 @@ def get_public_key():
 
 def send_file():
     print("preparing to send file")
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('localhost', 8000))
-    s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
+    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #s.connect(('localhost', 8000))
+    #s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
+    File = None
+    if(len(sys.argv) > 1):
+        filename = sys.argv[1]
+        File = open(filename, "r")
 
-    content = read_file()
-    chunk_length = 245
+    while(True):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('localhost', 8000))
+        s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
+        content = read_file(File)
+        chunk_length = len(content)
 
-    post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nContent-Length: {}\r\n'.format(chunk_length)
-    post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n" + content + "\r\n"
+        post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nContent-Length: {}\r\n'.format(chunk_length)
+        post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n" + content + "\r\n"
 
-    b = bytes(post_request, 'utf-8')
+        b = bytes(post_request, 'utf-8')
 
-    s.sendall(b)
-    i = 0
-    while True:
-        buffer = s.recv(4096)
-        if buffer:
-            i = i+1
-        else:
-            s.close()
+        s.sendall(b)
+        i = 0
+        while True:
+            buffer = s.recv(4096)
+            if buffer:
+                s.close()
+                break
+            else:
+                s.close()
+                break
+        print(len(content))
+        if(len(content) < 245):
             break
+
+    File.close()
 
 def handshake():
     (result, handshake) = generate_handshake()
@@ -105,12 +119,8 @@ def connect():
     get_public_key()
     handshake()
 
-def read_file():
-    if len(sys.argv) > 1:
-        fileName = sys.argv[1]
-        F = open(fileName, "r")
-        return F.read(245)
-#        print (F.read(245))
+def read_file(File):
+    return File.read(245)
 
 def test():
     string = "Ola".encode('utf-8')
