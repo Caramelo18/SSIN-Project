@@ -19,12 +19,24 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == '/handshake':
             handshake(self)
+        elif self.path == "/upload":
+            save_file(self)
 
     def do_GET(self):
         if self.path == '/public_key':
             get_public_key(self)
 
- 
+
+def save_file(self):
+    print("saving file")
+    content_length = int(self.headers['Content-Length'])
+    body = self.rfile.read(content_length)
+    print(body)
+    self.send_response(200)
+    self.end_headers()
+    response = bytes("ola", "utf-8")
+    signature = rsa.sign(response, private_key, 'SHA-256')
+    self.wfile.write(signature)
 
 def get_public_key(self):
     self.send_response(200)
@@ -34,10 +46,10 @@ def get_public_key(self):
     pbk = public_key.save_pkcs1('PEM')
     self.wfile.write(pbk)
 
+
 def handshake(self):
     content_length = int(self.headers['Content-Length'])
     body = self.rfile.read(content_length)
-    print(body)
     message = rsa.decrypt(body, private_key).decode('utf-8')
     numbers = message.split(" + ")
     a = int(numbers[0])
@@ -49,7 +61,6 @@ def handshake(self):
     response = bytes(str(response), "utf-8")
     signature = rsa.sign(response, private_key, 'SHA-256')
     self.wfile.write(signature)
-
 
 def load_keys():
     keys.load_keys()

@@ -44,12 +44,35 @@ def get_public_key():
     global server_public_key
     server_public_key = rsa.PublicKey.load_pkcs1(response, 'PEM')
 
+def send_file():
+    print("preparing to send file")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('localhost', 8000))
+    s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
+
+    content = read_file()
+    chunk_length = 245
+
+    post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nContent-Length: {}\r\n'.format(chunk_length)
+    post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n" + content + "\r\n"
+
+    b = bytes(post_request, 'utf-8')
+
+    s.sendall(b)
+    i = 0
+    while True:
+        buffer = s.recv(4096)
+        if buffer:
+            i = i+1
+        else:
+            s.close()
+            break
 
 def handshake():
     (result, handshake) = generate_handshake()
     result = str(result)
     result = result.encode('utf-8')
-    content = read_file()
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 8000))
     s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
@@ -57,17 +80,13 @@ def handshake():
     handshake = rsa.encrypt(bytes(handshake, 'utf-8'), server_public_key)
     handshake_length = 256
 
-    post_request = 'POST /handshake HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nContent-Length: {}\r\n'.format(handshake_length)
-    post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n" + content + "\r\n"
-
+    post_request = 'POST /handshake HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: text/html\r\nContent-Length: {}\r\n\r\n'.format(handshake_length)
     b = bytes(post_request, 'utf-8')
     b += handshake
 
     s.sendall(b)
-    #print(req)
 
     i = 0
-    server_answer = False
     while True:
         buffer = s.recv(4096)
         if buffer:
@@ -116,6 +135,7 @@ def test_sign():
 def main():
     load_keys()
     connect()
+    send_file()
     #test()
     #test_sign()
 
