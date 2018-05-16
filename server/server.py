@@ -52,9 +52,8 @@ def handshake(self):
     self.send_response(200)
     self.end_headers()
     response = bytes(str(response), "utf-8")
-
-    response = rsa.sign(response, private_key, 'SHA-256')
-    self.wfile.write(response)
+    signature = rsa.sign(response, private_key, 'SHA-256')
+    self.wfile.write(signature)
 
 
 def load_keys():

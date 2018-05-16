@@ -40,6 +40,8 @@ def connect():
     server_public_key = rsa.PublicKey.load_pkcs1(response, 'PEM')
 
     (result, handshake) = generate_handshake()
+    result = str(result)
+    result = result.encode('utf-8')
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 8000))
@@ -54,17 +56,19 @@ def connect():
 
     s.sendall(b)
 
+    i = 0
     while True:
         buffer = s.recv(4096)
         if buffer:
-            print(buffer)
-            #server_answer = rsa.decrypt(buffer, server_public_key)
-            #print(server_answer)
+            if i is 1:
+                server_answer = rsa.verify(result, buffer, server_public_key)
+            i = i + 1
         else:
             s.close()
             break
 
-
+    if server_answer:
+        print("Handshake complete")
 
 def generate_handshake():
     a = randint(0, 1000)
@@ -82,11 +86,22 @@ def test():
     message = rsa.decrypt(crypto, public_key)
     print(message)
 
+def test_sign():
+    string = "Ola".encode('utf-8')
+    global private_key, public_key
+    sign = rsa.sign(string, private_key, 'SHA-256')
+    print(string)
+    print(sign)
+    message = rsa.verify(string, sign, public_key)
+    print(message)
+
 
 def main():
     load_keys()
     #test()
+    #test_sign()
     connect()
+
 
 
 if __name__ == '__main__':
