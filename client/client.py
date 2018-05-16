@@ -20,7 +20,15 @@ def load_keys():
     private_key = keys.private_key
 
 
-def connect():
+def generate_handshake():
+    a = randint(0, 1000)
+    b = randint(0, 1000)
+    handshake = '{} + {}'.format(a, b)
+    result = a + b
+    return (result, handshake)
+
+
+def get_public_key():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 8000))
     s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
@@ -39,6 +47,8 @@ def connect():
     global server_public_key
     server_public_key = rsa.PublicKey.load_pkcs1(response, 'PEM')
 
+
+def handshake():
     (result, handshake) = generate_handshake()
     result = str(result)
     result = result.encode('utf-8')
@@ -70,12 +80,11 @@ def connect():
     if server_answer:
         print("Handshake complete")
 
-def generate_handshake():
-    a = randint(0, 1000)
-    b = randint(0, 1000)
-    handshake = '{} + {}'.format(a, b)
-    result = a + b
-    return (result, handshake)
+
+def connect():
+    get_public_key()
+    handshake()
+
 
 def test():
     string = "Ola".encode('utf-8')
@@ -85,6 +94,7 @@ def test():
     print(crypto)
     message = rsa.decrypt(crypto, public_key)
     print(message)
+
 
 def test_sign():
     string = "Ola".encode('utf-8')
@@ -98,10 +108,9 @@ def test_sign():
 
 def main():
     load_keys()
+    connect()
     #test()
     #test_sign()
-    connect()
-
 
 
 if __name__ == '__main__':

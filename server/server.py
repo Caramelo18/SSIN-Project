@@ -3,13 +3,9 @@ import ssl
 import sys
 sys.path.append('../')
 import keys
-import json
 import rsa
 from random import randint
-import re
 
-
-from io import BytesIO
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -22,8 +18,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == '/handshake':
             handshake(self)
-        elif self.path == '/fake':
-            self.send_response(200)
 
     def do_GET(self):
         if self.path == '/public_key':
@@ -62,6 +56,7 @@ def load_keys():
     public_key = keys.public_key
     private_key = keys.private_key
 
+
 def main():
     load_keys()
     try:
@@ -70,6 +65,7 @@ def main():
         httpd.serve_forever()
     except KeyboardInterrupt:
         httpd.socket.close()
+
 
 if __name__ == '__main__':
     main()
