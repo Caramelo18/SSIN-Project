@@ -50,9 +50,12 @@ def send_file():
     #s.connect(('localhost', 8000))
     #s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
     File = None
+    filename = None
     if(len(sys.argv) > 1):
         filename = sys.argv[1]
         File = open(filename, "r")
+
+    part = 0
 
     while(True):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -60,9 +63,9 @@ def send_file():
         s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
         content = read_file(File)
         encryptedContent = rsa.encrypt(bytes(content, 'utf-8'), server_public_key)
-        
+
         chunk_length = len(encryptedContent)
-        post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nContent-Length: {}\r\n'.format(chunk_length)
+        post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nChunk: {}-{}\r\nContent-Length: {}\r\n'.format(filename, part, chunk_length)
         post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n"
 
         b = bytes(post_request, 'utf-8')
@@ -78,7 +81,8 @@ def send_file():
             else:
                 s.close()
                 break
-        print(len(str(encryptedContent)))
+        part = part + 1
+        # print(len(str(encryptedContent)))
         if(len(content) < 245):
             break
 

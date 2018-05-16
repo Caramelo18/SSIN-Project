@@ -5,6 +5,7 @@ sys.path.append('../')
 import keys
 import rsa
 import cgi
+import os
 from random import randint
 
 
@@ -30,10 +31,18 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 def save_file(self):
     print("saving file")
     content_length = int(self.headers['Content-Length'])
+
+    directory = "backup"
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    filename = directory + "/" + self.headers['Chunk']
+    File = open(filename, 'wb')
+
     body = self.rfile.read(content_length)
-    print(type(body))
-    message = rsa.decrypt(body, private_key).decode('utf-8')
-    print(message)
+    File.write(body)
+
     self.send_response(200)
     self.end_headers()
     response = bytes("ola", "utf-8")
