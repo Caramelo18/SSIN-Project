@@ -4,11 +4,16 @@ import sys
 import rsa
 sys.path.append('../')
 import keys
-from random import randint
+import getopt
+import random
+import string
+from pathlib import Path
+
 
 public_key = None
 private_key = None
 server_public_key = None
+files = {}
 
 
 def load_keys():
@@ -148,13 +153,69 @@ def test_sign():
     print(message)
 
 
-def main():
+def backup(file):
+    f = Path(file)
+    if not f.exists():
+        print('File', file, 'does not exist')
+        sys.exit(4)
+    elif file in files:
+        print('File already exists')
+        sys.exit(5)
+
+    f = open("filesb", "a")
+    id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    line = '{} - {} - {}\n'.format(file, id, 3)
+    f.write(line)
+
+
+def restore(file):
+    if file not in files:
+        print('File is not backed up')
+        sys.exit(3)
+    (fileid, chunks) = files[file]
+    print('restore', file, fileid, chunks)
+
+
+def load_files():
+    f = Path("filesb")
+
+    if f.exists():
+        f = open("filesb", "r")
+    else:
+        f = open("filesb", "w")
+
+    lines = f.read().splitlines()
+
+    for line in lines:
+        split = line.split(" - ")
+        filename = split[0]
+        fileid = split[1]
+        filechunks = split[2]
+        files[filename] = (fileid, filechunks)
+
+
+def main(argv):
     load_keys()
-    connect()
-    send_file()
+    load_files()
+
+    if len(argv) is not 2:
+        print("usage")
+        sys.exit(2)
+
+    option = argv[0]
+    file = argv[1]
+
+    if option == '-b':
+        backup(file)
+    elif option == '-r':
+        restore(file)
+
+
+    #connect()
+    #send_file()
     #test()
     #test_sign()
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
