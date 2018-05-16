@@ -59,12 +59,14 @@ def send_file():
         s.connect(('localhost', 8000))
         s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
         content = read_file(File)
-        chunk_length = len(content)
-
+        encryptedContent = rsa.encrypt(bytes(content, 'utf-8'), server_public_key)
+        
+        chunk_length = len(encryptedContent)
         post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nContent-Length: {}\r\n'.format(chunk_length)
-        post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n" + content + "\r\n"
+        post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n"
 
         b = bytes(post_request, 'utf-8')
+        b += encryptedContent
 
         s.sendall(b)
         i = 0
@@ -76,7 +78,7 @@ def send_file():
             else:
                 s.close()
                 break
-        print(len(content))
+        print(len(str(encryptedContent)))
         if(len(content) < 245):
             break
 
