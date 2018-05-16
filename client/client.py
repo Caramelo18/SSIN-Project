@@ -7,6 +7,9 @@ import keys
 import getopt
 import random
 import string
+import math
+import os
+import base64
 from pathlib import Path
 
 
@@ -161,7 +164,9 @@ def backup(file):
 
     f = open("filesb", "a")
     id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-    line = '{} - {} - {}\n'.format(file, id, 3)
+    filesize = os.path.getsize(file)
+    chunks = int(math.ceil(filesize/245))
+    line = '{} - {} - {}\n'.format(file, id, chunks)
     f.write(line)
     send_file(file, id)
 
@@ -171,7 +176,45 @@ def restore(file):
         print('File is not backed up')
         sys.exit(3)
     (fileid, chunks) = files[file]
-    print('restore', file, fileid, chunks)
+
+    directory = "restored"
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    filename = directory + "/" + file
+
+    f = Path(filename)
+    if f.exists():
+        print('File', file, 'already exist')
+        sys.exit(1)
+    f = open(filename, 'a')
+
+    nchunks = int(chunks)
+    print("restoring...")
+    for value in range(0, nchunks):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('localhost', 8000))
+        s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
+        name = "{}-{}".format(fileid, value)
+        b = bytes("GET /restore HTTP/1.1\r\nHost: localhost:8000\r\nFile: {}\r\n\r\n".format(name), 'utf-8')
+        s.sendall(b)
+
+        response = bytes()
+        i = 0
+        while True:
+            buffer = s.recv(4096)
+            if buffer:
+                if i is 1:
+                    response += buffer
+                i = i + 1
+            else:
+                s.close()
+                break
+        encode = rsa.decrypt(response, private_key)
+        text = encode.decode('utf-8')
+        f.write(text)
+    print("file restored")
 
 
 def load_files():

@@ -123,4 +123,5 @@ pip-selfcheck.json
 
 client/filesb
 server/backup/
+client/restored/
 share

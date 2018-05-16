@@ -6,6 +6,7 @@ import keys
 import rsa
 import cgi
 import os
+import base64
 from random import randint
 
 
@@ -26,6 +27,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/public_key':
             get_public_key(self)
+        if self.path == '/restore':
+            restore(self)
 
 
 def save_file(self):
@@ -56,6 +59,17 @@ def get_public_key(self):
     global public_key
     pbk = public_key.save_pkcs1('PEM')
     self.wfile.write(pbk)
+
+def restore(self):
+    filename = self.headers['File']
+    print(filename)
+    self.send_response(200)
+    self.send_header("Content-type", "text/xml")
+    self.end_headers()
+    file = open("backup/" + filename, "rb")
+    content = file.read()
+    self.wfile.write(content)
+
 
 
 def handshake(self):
