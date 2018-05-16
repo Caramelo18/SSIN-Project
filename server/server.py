@@ -4,6 +4,7 @@ import sys
 sys.path.append('../')
 import keys
 import rsa
+import cgi
 
 from io import BytesIO
 
@@ -15,8 +16,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(b'Hello, world!')
 
     def do_POST(self):
+        
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
+        print (body)
         self.send_response(200)
         self.end_headers()
         response = BytesIO()

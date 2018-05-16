@@ -4,7 +4,7 @@ import sys
 import rsa
 sys.path.append('../')
 import keys
-
+import requests
 
 public_key = None
 private_key = None
@@ -18,11 +18,14 @@ def load_keys():
 
 
 def connect():
+    content = readFile()
+    req = "POST / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: close\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nContent-Length: 245\r\n---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n" + content + "\r\n---------------------------735323031399963166993862150--"
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 8000))
     s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
-    b = bytes("GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: close\r\n\r\n", 'utf-8')
+    b = bytes(req, 'utf-8')
     s.sendall(b)
+    print(req)
 
     while True:
         new = s.recv(4096)
@@ -31,6 +34,12 @@ def connect():
             break
         print(new)
 
+def readFile():
+    if len(sys.argv) > 1:
+        fileName = sys.argv[1]
+        F = open(fileName, "r")
+        return F.read(245)
+#        print (F.read(245))
 
 def test():
     string = "Ola".encode('utf-8')
@@ -44,7 +53,7 @@ def test():
 
 def main():
     load_keys()
-    #test()
+    #readFile()
     connect()
 
 
