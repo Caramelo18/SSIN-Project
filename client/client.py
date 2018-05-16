@@ -49,16 +49,13 @@ def get_public_key():
     global server_public_key
     server_public_key = rsa.PublicKey.load_pkcs1(response, 'PEM')
 
-def send_file():
+def send_file(filename, id):
     print("preparing to send file")
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #s.connect(('localhost', 8000))
     #s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
     File = None
-    filename = None
-    if(len(sys.argv) > 1):
-        filename = sys.argv[1]
-        File = open(filename, "r")
+    File = open(filename, "r")
 
     part = 0
 
@@ -67,10 +64,10 @@ def send_file():
         s.connect(('localhost', 8000))
         s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
         content = read_file(File)
-        encryptedContent = rsa.encrypt(bytes(content, 'utf-8'), server_public_key)
+        encryptedContent = rsa.encrypt(bytes(content, 'utf-8'), public_key)
 
         chunk_length = len(encryptedContent)
-        post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nChunk: {}-{}\r\nContent-Length: {}\r\n'.format(filename, part, chunk_length)
+        post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nChunk: {}-{}\r\nContent-Length: {}\r\n'.format(id, part, chunk_length)
         post_request += "---------------------------735323031399963166993862150\r\nContent-Disposition: form-data; name=\"1\"\r\n\r\n"
 
         b = bytes(post_request, 'utf-8')
@@ -163,9 +160,10 @@ def backup(file):
         sys.exit(5)
 
     f = open("filesb", "a")
-    id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
     line = '{} - {} - {}\n'.format(file, id, 3)
     f.write(line)
+    send_file(file, id)
 
 
 def restore(file):
