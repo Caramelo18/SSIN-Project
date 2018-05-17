@@ -37,6 +37,51 @@ def send_public_key(s):
     s.send(public_key.save_pkcs1('PEM'))
 
 
+def generate_handshake():
+    a = randint(0, 1000)
+    b = randint(0, 1000)
+    handshake = '{} + {}'.format(a, b)
+    result = a + b
+    return (result, handshake)
+
+def handshake(s):
+    (result, handshake) = generate_handshake()
+    result = str(result)
+    result = result.encode('utf-8')
+    
+    handshake = rsa.encrypt(bytes(handshake, 'utf-8'), public_key)
+    s.send(handshake)
+    #s.send(b"\r\n")
+    
+    i = 0
+    buffer = s.recv(256)
+    if buffer:
+        server_answer = rsa.verify(result, buffer, public_key)
+    else:
+        s.close()
+        sys.exit(1)
+
+    if server_answer:
+        print("Handshake complete")
+    else:
+        sys.exit(1)
+
+
+def respond_handshake(s):
+    message = s.recv(256)
+    msgDecrypted = rsa.decrypt(message, private_key)
+    msgDecoded = msgDecrypted.decode()
+    numbers = msgDecoded.split(" + ")
+    a = int(numbers[0])
+    b = int(numbers[1])
+    response = a + b
+
+    response = bytes(str(response), "utf-8")
+    signature = rsa.sign(response, private_key, 'SHA-256')
+    s.send(signature)
+
+
+
 def create_socket(address):
     s = socket.socket()
     s.bind(address)
@@ -69,9 +114,9 @@ def send(s, filename):
 def receive(s):
     c, addr = s.accept()
     send_public_key(c)
-    filename = get_filename(c)
+    respond_handshake(c)
+    filename = get_name(c)
 
-    print (filename)
     File = open(filename, "wb")
 
     while True:
@@ -84,7 +129,7 @@ def receive(s):
     File.close()
     c.close()
 
-def get_filename(c):
+def get_name(c):
     name = b""
     while True:
         byte = c.recv(1)
@@ -114,11 +159,12 @@ def main():
 
     if(sys.argv[1] == "-r"):
         load_keys()
-        s = create_socket(("127.0.0.1", 3003))
+        s = create_socket(("127.0.0.1", 3000))
         receive(s)
     elif(sys.argv[1] == "-s"):
-        s = open_socket(("127.0.0.1",3003))
+        s = open_socket(("127.0.0.1",3000))
         get_public_key(s)
+        handshake(s)
         send(s, sys.argv[2])
     else :
         print_usage()
