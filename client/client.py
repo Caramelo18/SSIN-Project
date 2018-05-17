@@ -9,7 +9,7 @@ import random
 import string
 import math
 import os
-import base64
+from random import randint
 from pathlib import Path
 
 
@@ -53,11 +53,12 @@ def get_public_key():
     server_public_key = rsa.PublicKey.load_pkcs1(response, 'PEM')
 
 def send_file(filename, id):
-    print("preparing to send file")
     File = None
     File = open(filename, "rb")
 
     part = 0
+
+    print("sending file {}...".format(filename))
 
     while(True):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -89,6 +90,7 @@ def send_file(filename, id):
             break
 
     File.close()
+    print("file {} sent".format(filename))
 
 def handshake():
     (result, handshake) = generate_handshake()
@@ -121,6 +123,8 @@ def handshake():
 
     if server_answer:
         print("Handshake complete")
+    else:
+        sys.exit(1)
 
 
 def connect():
@@ -188,7 +192,7 @@ def restore(file):
     f = open(filename, 'ab')
 
     nchunks = int(chunks)
-    print("restoring...")
+    print("restoring {}...".format(filename))
     for value in range(0, nchunks):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(('localhost', 8000))
@@ -210,7 +214,7 @@ def restore(file):
                 break
         encode = rsa.decrypt(response, private_key)
         f.write(encode)
-    print("file restored")
+    print("file {} restored".format(filename))
 
 
 def load_files():
@@ -234,6 +238,7 @@ def load_files():
 def main(argv):
     load_keys()
     load_files()
+    connect()
 
     if len(argv) is not 2:
         print("usage")
@@ -248,7 +253,6 @@ def main(argv):
         restore(file)
 
 
-    #connect()
     #send_file()
     #test()
     #test_sign()

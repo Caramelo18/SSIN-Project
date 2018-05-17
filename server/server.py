@@ -32,7 +32,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
 
 def save_file(self):
-    print("saving file")
     content_length = int(self.headers['Content-Length'])
 
     directory = "backup"
@@ -62,7 +61,6 @@ def get_public_key(self):
 
 def restore(self):
     filename = self.headers['File']
-    print(filename)
     self.send_response(200)
     self.send_header("Content-type", "text/xml")
     self.end_headers()
