@@ -54,11 +54,8 @@ def get_public_key():
 
 def send_file(filename, id):
     print("preparing to send file")
-    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #s.connect(('localhost', 8000))
-    #s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
     File = None
-    File = open(filename, "r")
+    File = open(filename, "rb")
 
     part = 0
 
@@ -67,7 +64,7 @@ def send_file(filename, id):
         s.connect(('localhost', 8000))
         s = ssl.wrap_socket (s, ssl_version=ssl.PROTOCOL_TLSv1)
         content = read_file(File)
-        encryptedContent = rsa.encrypt(bytes(content, 'utf-8'), public_key)
+        encryptedContent = rsa.encrypt(content, public_key)
 
         chunk_length = len(encryptedContent)
         post_request = 'POST /upload HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150\r\nChunk: {}-{}\r\nContent-Length: {}\r\n'.format(id, part, chunk_length)
@@ -188,7 +185,7 @@ def restore(file):
     if f.exists():
         print('File', file, 'already exist')
         sys.exit(1)
-    f = open(filename, 'a')
+    f = open(filename, 'ab')
 
     nchunks = int(chunks)
     print("restoring...")
@@ -212,8 +209,7 @@ def restore(file):
                 s.close()
                 break
         encode = rsa.decrypt(response, private_key)
-        text = encode.decode('utf-8')
-        f.write(text)
+        f.write(encode)
     print("file restored")
 
 

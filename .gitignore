@@ -125,3 +125,7 @@ client/filesb
 server/backup/
 client/restored/
 share
+*.png
+*.jpg
+*.jpeg
+*.pdf
