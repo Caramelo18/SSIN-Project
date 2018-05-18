@@ -124,8 +124,11 @@ pip-selfcheck.json
 client/filesb
 server/backup/
 client/restored/
+client/received/
+client-2/received/
 share
 *.png
 *.jpg
 *.jpeg
 *.pdf
+*.txt
