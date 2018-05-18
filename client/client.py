@@ -85,7 +85,6 @@ def send_file(filename, id):
                 s.close()
                 break
         part = part + 1
-        # print(len(str(encryptedContent)))
         if(len(content) < 245):
             break
 
@@ -251,11 +250,6 @@ def main(argv):
         backup(file)
     elif option == '-r':
         restore(file)
-
-
-    #send_file()
-    #test()
-    #test_sign()
 
 
 if __name__ == '__main__':

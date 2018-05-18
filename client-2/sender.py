@@ -51,7 +51,6 @@ def handshake(s):
 
     handshake = rsa.encrypt(bytes(handshake, 'utf-8'), public_key)
     s.send(handshake)
-    #s.send(b"\r\n")
 
     i = 0
     buffer = s.recv(256)
@@ -99,14 +98,13 @@ def send(s, filename):
     global public_key
     encryptedName = rsa.encrypt(filename.encode(), public_key)
     s.send(encryptedName)
-    #s.send(filename.encode())
     s.send(b'\r\n')
     File = open(filename, "rb")
     while True:
         content = File.read(245)
-        encrypted = rsa.encrypt(content, public_key)
+        c = bytes(content)
+        encrypted = rsa.encrypt(c, public_key)
         s.send(encrypted)
-        #s.send(content)
         if(len(content) < 245):
             break
 
